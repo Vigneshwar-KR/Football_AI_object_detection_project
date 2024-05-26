@@ -1,0 +1,11 @@
+training_model/football-players-detection-1/
+training_model/runs/
+
+runs/detect/
+
+training_model/yolov8x.pt
+models/best.pt
+models/last.pt
+
+input/
+output/
