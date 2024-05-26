@@ -92,9 +92,13 @@ Now we draw circular annotation,
 
 Similarly drawn circular and triangular annotation on the ball.
 
+
+Split the team based on color classification
+    - we only need the T-shirt, therefore crop the top part only
+    - We can't take the average color as the background is dominant, therefore we segment out the green background using KMeans classification
+    - Then we divide and assign team index label to two teams, for this again KMeans classification is used
+
+
 PROBLEM SEEN:
     - there's some frames while the ball is not detected and we get a flickering detection of the ball
     - when the bounding boxes of different player coincide and pass through, the track id differs and the model detects, assigns a new object and it's is not tracked properly
-
-    
-     

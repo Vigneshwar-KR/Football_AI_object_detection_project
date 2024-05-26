@@ -15,7 +15,7 @@ class Tracker:
 
 
     def detect_frames(self, frames):
-        batch_size=20                 # instead of predicting on whole frame, we do it for 20 frames (Goes by 20,40...). So we won't go to memory issues
+        batch_size=20                       # instead of predicting on whole frame, we do it for 20 frames (Goes by 20,40...). So we won't go to memory issues
         detections = [] 
         for i in range(0,len(frames),batch_size):
             detections_batch = self.model.predict(frames[i:i+batch_size],conf=0.1)       # instead of predict we can use model.track, but we didn't use as GK is labelled as player sometime as we don't have large dataset. Therefore, we use predict now then override GK with player and then run tracker on it. 
@@ -77,19 +77,19 @@ class Tracker:
                 cls_id = frame_detection[3]
 
                 if cls_id == cls_names_inv['ball']:
-                    tracks["ball"][frame_num][1] = {"bbox":bbox}          #instead of track_id we put 1 ball
+                    tracks["ball"][frame_num][1] = {"bbox":bbox}          # there's only one ball, therefore in track_id we put 1 ball
 
 
 
-            # print(detection_supervision)  # to view supervision format
-            # print(detection_with_tracks)            # to show how i track across frames
+            # print(detection_supervision)              # to view supervision format
+            # print(detection_with_tracks)              # to show how i track across frames
 
         #save this track object as a pickle. ie) Serialize the object to a byte stream
         if stub_path is not None:
             with open(stub_path,'wb') as f:
                 pickle.dump(tracks,f) 
 
-        return tracks                                  # list of dictionaries  
+        return tracks                                   # list of dictionaries  
 
     # this depends on the width of the object's bbox 
     def draw_ellipse(self,frame,bbox,color,track_id=None):        
@@ -161,7 +161,8 @@ class Tracker:
     
             # Draw ellipse on Players 
             for track_id, player in player_dict.items():     
-                frame = self.draw_ellipse(frame, player["bbox"],(0,0,255), track_id)
+                color = player.get("team_color",(0,0,255))
+                frame = self.draw_ellipse(frame, player["bbox"],color, track_id)
 
             # Draw ellipse on referee 
             for _, referee in referee_dict.items():     
