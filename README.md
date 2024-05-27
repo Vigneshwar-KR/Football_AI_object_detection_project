@@ -79,16 +79,16 @@ This is used to split the team based on jersey color.
 
 # Inference
 
-The input video i used can be seen ( [here](https://drive.google.com/file/d/14FqtHMLTJVRtzL-7uA5jg7Cdq8bMFbTP/view?usp=drive_link) )
+The input video i used can be seen [here](https://drive.google.com/file/d/14FqtHMLTJVRtzL-7uA5jg7Cdq8bMFbTP/view?usp=drive_link)
 
-The model is then used to predict this video and the output video can be seen ( [here](https://drive.google.com/file/d/1Oq3k9UuIrjIFftvtbLKl57hdFXpTSjva/view?usp=drive_link) )
+The model is then used to predict this video and the output video can be seen [here](https://drive.google.com/file/d/1Oq3k9UuIrjIFftvtbLKl57hdFXpTSjva/view?usp=drive_link)
 
 
 # PROBLEM SEEN:
     - there's some frames while the ball is not detected and get a flickering detection of the ball
     - when the bounding boxes of different player coincide and pass through, the track id differs and the model detects, assigns a new object and it's is not tracked properly
 
-this problem can be seen clearly in this link ( [here](https://drive.google.com/file/d/16tOUZa9zORrCSXzhFO24p4ihA9Cjh88X/view?usp=drive_link) )
+this problem can be seen clearly in this link [here](https://drive.google.com/file/d/16tOUZa9zORrCSXzhFO24p4ihA9Cjh88X/view?usp=drive_link)
 
     
 # **Upcoming tasks:** 
