@@ -12,10 +12,15 @@ input/
 # input/08fd33_4.mp4
 
 # output/
-# output/1.avi
-# output/2.avi
-# output/overlap_error.avi
-# output/cropped_image.jpg
+output/1.avi
+output/2.avi
+output/3.avi
+output/4.avi
+output/5.avi
+output/6.avi
+output/7.avi
+output/overlap_error.avi
+output/cropped_image.jpg
 
 yolov8n.pt
 
