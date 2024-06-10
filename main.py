@@ -3,6 +3,10 @@ from trackers import Tracker
 import cv2
 from team_assigner import TeamAssigner
 import numpy as np
+import os
+from ball_to_player_assigner import PlayerBallAssigner
+from camera_movement_estimator import CameraMovementEstimator
+from perspective_transformation import PerspectiveTransformation
 
 def main():
     # print("Hello World")
@@ -13,11 +17,34 @@ def main():
 
     # Initialize Tracker
     # Use the best weights from trained model
-    tracker = Tracker('models/best.pt')
+    # tracker = Tracker('models/best.pt')
+    model_path = 'models/best.pt'
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"The model file was not found: {model_path}")
+    tracker = Tracker(model_path)
+
 
     tracks = tracker.get_object_tracks(video_frames,
                                        read_from_stub=True,
                                        stub_path='stubs/track_stubs.pkl')
+    
+    # Get object positions 
+    tracker.add_position_to_tracks(tracks)
+    
+    # camera movement estimator
+    camera_movement_estimator = CameraMovementEstimator(video_frames[0])
+    camera_movement_per_frame = camera_movement_estimator.get_camera_movement(video_frames,
+                                                                                read_from_stub=True,
+                                                                                stub_path='stubs/camera_movement_stub.pkl')
+    camera_movement_estimator.add_adjust_positions_to_tracks(tracks,camera_movement_per_frame)
+
+
+    # Perspective Transformation
+    perspective_transformer = PerspectiveTransformation()
+    perspective_transformer.add_transformed_position_to_tracks(tracks)
+
+    # Interpolate ball detection
+    tracks["ball"] = tracker.interpolate_ball(tracks["ball"])
     
     # Assign Player Teams
     team_assigner = TeamAssigner()
@@ -47,9 +74,26 @@ def main():
     #     cv2.imwrite(f'output/cropped_image.jpg', cropped_frame)
     #     break
 
-    #draw annotation
-    video_frames = tracker.draw_annotations(video_frames,tracks)
+
+    # Assign ball to player  
+    player_assigner =PlayerBallAssigner()
+    team_ball_control= []
+    for frame_num, player_track in enumerate(tracks['players']):
+        ball_bbox = tracks['ball'][frame_num][1]['bbox']
+        assigned_player = player_assigner.assign_ball_to_player(player_track, ball_bbox)
+
+        if assigned_player != -1:
+            tracks['players'][frame_num][assigned_player]['has_ball'] = True
+            team_ball_control.append(tracks['players'][frame_num][assigned_player]['team'])
+        else:
+            team_ball_control.append(team_ball_control[-1])              # assign to last team who had the ball
+    team_ball_control= np.array(team_ball_control)
+
+    ## draw annotation
+    video_frames = tracker.draw_annotations(video_frames,tracks,team_ball_control)
     
+    ## Draw Camera movement
+    video_frames = camera_movement_estimator.draw_camera_movement(video_frames,camera_movement_per_frame)
 
     # Save video
     save_video(video_frames, 'output/output_video.avi')

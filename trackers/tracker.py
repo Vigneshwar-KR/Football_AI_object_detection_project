@@ -2,11 +2,13 @@ from ultralytics import YOLO
 import supervision as sv                     # this library has the tracker
 import pickle
 import os
-import sys 
 import cv2
 import numpy as np
+import pandas as pd
+import sys 
 sys.path.append('../')
-from utilities import get_center_of_bbox, get_width_of_bbox
+from utilities import get_center_of_bbox, get_width_of_bbox, get_foot_position
+
 
 class Tracker:
     def __init__(self, model_path):
@@ -21,7 +23,6 @@ class Tracker:
             detections_batch = self.model.predict(frames[i:i+batch_size],conf=0.1)       # instead of predict we can use model.track, but we didn't use as GK is labelled as player sometime as we don't have large dataset. Therefore, we use predict now then override GK with player and then run tracker on it. 
             detections += detections_batch
         return detections
-
 
     def get_object_tracks(self, frames,read_from_stub=False, stub_path=None):
 
@@ -91,6 +92,32 @@ class Tracker:
 
         return tracks                                   # list of dictionaries  
 
+
+    def interpolate_ball(self,ball_positions):
+        ball_positions = [x.get(1,{}).get('bbox',[]) for x in ball_positions]         # if key 1 and bbox not present, then i creates a empty dict n list respectively. 
+        df_ball_positions = pd.DataFrame(ball_positions,columns=['x1','y1','x2','y2'])
+
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()       # used for initial one or two missing frames
+
+        ball_positions = [{1: {"bbox":x}} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions
+    
+    def add_position_to_tracks(sekf,tracks):
+        for object, object_tracks in tracks.items():
+            for frame_num, track in enumerate(object_tracks):
+                for track_id, track_info in track.items():
+                    bbox = track_info['bbox']
+                    if object == 'ball':
+                        position= get_center_of_bbox(bbox)
+                    else:
+                        position = get_foot_position(bbox)
+                    tracks[object][frame_num][track_id]['position'] = position
+
+
+
+
     # this depends on the width of the object's bbox 
     def draw_ellipse(self,frame,bbox,color,track_id=None):        
         y2 = int(bbox[3])   # y2 is the bottom of the bounding box
@@ -149,8 +176,28 @@ class Tracker:
         cv2.drawContours(frame, [triangle_points],0,(0,0,0), 2)
 
         return frame
+    
+    def draw_team_ball_control(self,frame,frame_num,team_ball_control):
+        # Draw a semi-transparent rectangle 
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (1350, 50), (1900,170), (255,255,255), cv2.FILLED)
+        alpha = 0.4
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
 
-    def draw_annotations(self,video_frames, tracks):
+        team_ball_control_till_frame = team_ball_control[:frame_num+1]
+        
+        team_1_num_frames = team_ball_control_till_frame[team_ball_control_till_frame==1].shape[0]
+        team_2_num_frames = team_ball_control_till_frame[team_ball_control_till_frame==2].shape[0]
+        team_1 = team_1_num_frames/(team_1_num_frames+team_2_num_frames)
+        team_2 = team_2_num_frames/(team_1_num_frames+team_2_num_frames)
+    
+        cv2.putText(frame, f"Team 1 Ball Control: {team_1*100:.2f}%",(1400,100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
+        cv2.putText(frame, f"Team 2 Ball Control: {team_2*100:.2f}%",(1400,150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 3)
+
+        return frame
+
+
+    def draw_annotations(self,video_frames, tracks, team_ball_control):
         output_video_frames= []
         for frame_num, frame in enumerate(video_frames):
             frame = frame.copy()
@@ -164,6 +211,9 @@ class Tracker:
                 color = player.get("team_color",(0,0,255))
                 frame = self.draw_ellipse(frame, player["bbox"],color, track_id)
 
+                if player.get('has_ball', False):
+                    frame = self.draw_traingle(frame,player["bbox"],(0,0,255))
+
             # Draw ellipse on referee 
             for _, referee in referee_dict.items():     
                 frame = self.draw_ellipse(frame, referee["bbox"],(0,255,255))
@@ -175,6 +225,8 @@ class Tracker:
             for track_id, ball in ball_dict.items():
                 frame = self.draw_traingle(frame, ball["bbox"],(0,255,0))
 
+            # Draw team ball control 
+            frame= self.draw_team_ball_control(frame,frame_num, team_ball_control)
 
             output_video_frames.append(frame)
 

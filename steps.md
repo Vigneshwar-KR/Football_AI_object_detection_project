@@ -100,5 +100,21 @@ Split the team based on color classification
 
 
 PROBLEM SEEN:
-    - there's some frames while the ball is not detected and we get a flickering detection of the ball
+    - there's some frames where the ball is not detected and we get a flickering detection of the ball
     - when the bounding boxes of different player coincide and pass through, the track id differs and the model detects, assigns a new object and it's is not tracked properly
+
+
+### Ball Interpolation
+#### Problem task
+- there's some frames where the ball is not detected and we get a flickering detection of the ball
+
+We use interpolate function from pandas to find the missing detections of the ball. It gives us a decent result, as there are some lags noted in the output. But this generalizes well to our problem.
+
+### Player ball assigner
+- we annotate the player who has the ball by calculating the distance between the ball and the player's foot. We set a threshold and see if the distance is below the threshold to draw a red triangle on the player.
+
+### Ball possession percentage
+- this is calculated by finding the ratio of frames assigned to each team and total number of frames assigned to both teams
+
+### Perspective Transformation
+- helps us to know how much a player has moved in unit measurements in real world
