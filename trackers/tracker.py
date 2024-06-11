@@ -218,9 +218,9 @@ class Tracker:
             for _, referee in referee_dict.items():     
                 frame = self.draw_ellipse(frame, referee["bbox"],(0,255,255))
 
-            # Draw circular marker on ball
-            for track_id, ball in ball_dict.items():
-                frame = self.draw_circular_ball(frame, ball["bbox"],(255,255,255))
+            # # Draw circular marker on ball
+            # for track_id, ball in ball_dict.items():
+            #     frame = self.draw_circular_ball(frame, ball["bbox"],(255,255,255))
             # Draw triangular marker on ball 
             for track_id, ball in ball_dict.items():
                 frame = self.draw_traingle(frame, ball["bbox"],(0,255,0))

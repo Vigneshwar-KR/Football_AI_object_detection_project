@@ -118,3 +118,4 @@ We use interpolate function from pandas to find the missing detections of the ba
 
 ### Perspective Transformation
 - helps us to know how much a player has moved in unit measurements in real world
+- a classic example of this if to transform the page on table to only select the page and transform it so that it appears as a top view of the image
